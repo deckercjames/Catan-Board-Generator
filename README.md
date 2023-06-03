@@ -4,7 +4,7 @@
 ## Overview
 This is a script to generate random PDF boards for Settlers of Catan.
 
-The latex files were created by another u/likethevegetable:
+The latex files were created by u/likethevegetable:
 https://www.reddit.com/r/Ultralight/comments/itd5n0/ultralight_settlers_of_catan_project_catikz/
 https://www.overleaf.com/read/xbvtgbrsmgpb
 
