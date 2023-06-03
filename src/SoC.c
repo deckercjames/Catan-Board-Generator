@@ -18,6 +18,9 @@ typedef enum resources
     TERMINATOR = '\0',
 } resources_t;
 
+/**
+ * A struct to show the frequence of a resource for a mechanic in the game (e.g. hexes, ports)
+ */
 typedef struct resource_frequencies{
     resources_t resource;
     int frequency;

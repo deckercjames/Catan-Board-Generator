@@ -11,8 +11,6 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# CaTikZ - Catan board maker using LaTeX's TikZ
-
 # Generate two source files for the pdf generator
 ./bin/SoC.out $RANDOM > ./CaTikZ/Example1.csv
 ./bin/SoC.out $RANDOM > ./CaTikZ/Example2.csv
