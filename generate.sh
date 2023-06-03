@@ -2,7 +2,8 @@
 
 # Compile the c code
 echo "Compiling..."
-gcc ./src/SoC.c -o ./src/SoC.out
+mkdir bin
+gcc ./src/SoC.c -o ./bin/SoC.out
 
 # Check that compile exited succesfully
 if [ $? -ne 0 ]; then
@@ -13,8 +14,8 @@ fi
 # CaTikZ - Catan board maker using LaTeX's TikZ
 
 # Generate two source files for the pdf generator
-./src/SoC.out $RANDOM > ./CaTikZ/Example1.csv
-./src/SoC.out $RANDOM > ./CaTikZ/Example2.csv
+./bin/SoC.out $RANDOM > ./CaTikZ/Example1.csv
+./bin/SoC.out $RANDOM > ./CaTikZ/Example2.csv
 
 # Check that program correctly wrote the files
 if [ $? -ne 0 ]; then
@@ -32,7 +33,6 @@ fi
 # Generate the board pdf with latex
 cd CaTikZ/
 pdflatex CaTikZ.tex
-pdflatex ResourceCards.tex
 cd ..
 
 # Make a directory to store the output
