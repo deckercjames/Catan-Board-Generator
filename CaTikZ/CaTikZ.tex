@@ -1,0 +1,286 @@
+\documentclass[11pt,a4paper]{article}
+
+%%% Place your CSV files in the same folder as this file, and list them below.
+\def\CSVfiles{%
+	{Example1.csv},%
+	{Example2.csv}% ensure the last one has NO comma after
+}
+
+%%% PACKAGES ----------------------------------
+\usepackage{geometry}
+\geometry{landscape,margin=0.2in}
+
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+
+\usepackage{graphicx}
+\usepackage{pgffor}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric}
+
+\usepackage{xint}
+
+
+\usepackage{adjustbox}
+\usepackage{catchfile}
+
+\usepackage{etoolbox}
+\usepackage{ifthen}
+
+\usepackage{calc}
+\usepackage{xstring}
+\usepackage{xintexpr}
+
+\usepackage[outline]{contour}
+
+%%% COLORS ----------------------------------
+\definecolor{s}{RGB}{173, 255, 47}
+\definecolor{h}{RGB}{255, 223, 0}  % h = wheat
+\definecolor{g}{RGB}{255, 223, 0}  % g = grain = wheat
+\definecolor{w}{RGB}{125,125,0}    % w = wood
+\definecolor{l}{RGB}{125,125,0}    % l = lumber = wood
+\definecolor{b}{RGB}{227, 66, 52}
+\definecolor{o}{RGB}{181, 181, 181}
+\definecolor{d}{RGB}{255,255,255}
+\definecolor{a}{RGB}{0,255,255}
+
+%%% TIKZ STUFF ----------------------------------
+\tikzset{hexsty/.style={draw,shape=regular polygon,regular polygon sides=6,minimum size=42mm,
+		inner sep=0pt,outer sep=0pt,shape border rotate=90}}
+\tikzset{portsty/.style={draw=blue,circle}}
+
+%%% SYMBOLS FOR LEGEND ----------------------------------
+\def\RoadSym{\tikz\fill[scale=0.4] (0, 0) rectangle ++(1.0,0.3) ;} 
+\def\SettSym{\tikz\filldraw[scale=0.4] (0, 0) circle (0.3) ;} 
+\def\CitySym{\begin{tikzpicture}%
+	\filldraw[scale=0.4] (0, 0) circle (0.3) ;
+	\draw[scale=0.4, line width=1pt] (0, 0) circle (0.5) ;
+	\end{tikzpicture}%
+}
+\def\DevSym{\begin{tikzpicture}%
+	\draw[scale=0.4, line width=0.8pt] (0.6, 0.5) circle (0.2) ;
+	\draw[scale=0.4, line width=1pt] (0, 0) rectangle (1.2, 1) ;
+	\end{tikzpicture}%
+}
+
+
+%%% TILE AND PORT HELPER FUNCS ----------------------------------
+\newcommand{\genResWord}[1]{% creates word on tiles
+	\ifthenelse{\equal{#1}{w}}{\contour{white}{\normalsize WOOD}}{}%
+	\ifthenelse{\equal{#1}{l}}{\contour{white}{\normalsize LUMBER}}{}%
+	\ifthenelse{\equal{#1}{h}}{\contour{white}{\normalsize WHEAT}}{}%
+	\ifthenelse{\equal{#1}{g}}{\contour{white}{\normalsize GRAIN}}{}%
+	\ifthenelse{\equal{#1}{o}}{\contour{white}{\normalsize ORE}}{}%
+	\ifthenelse{\equal{#1}{b}}{\contour{white}{\normalsize BRICK}}{}%
+	\ifthenelse{\equal{#1}{s}}{\contour{white}{\normalsize SHEEP}}{}%
+	\ifthenelse{\equal{#1}{d}}{\contour{white}{\normalsize DESERT}}{}%
+}
+
+
+\newcommand{\pip}{\raisebox{0.7ex}{\contour{white}{\scriptsize$\bullet$}}}  % a pip (dot)
+\newcommand{\genPips}[1]{% generate pip (dots) that correspond to dice roll probability
+	\ifnum #1>1% only show pips if 2 or more
+	\if\relax\detokenize{#1}\relax%
+	\else%
+	\edef\Npip{\xintthe\xintiexpr6-abs(#1-7)\relax}%
+	\edef\Nspace{\xintthe\xintiexpr5-\Npip\relax}%
+	\foreach \n in {1,...,\Npip}{\pip}%
+	\foreach \n in {1,...,\Nspace}{\phantom{\pip}}%
+	\fi%
+	\else%
+	\phantom{\pip}
+	\fi%
+}
+
+\newcommand{\genNum}[1]{ % generate number for tile, underlines 6 or 9, white 0 if desert
+	\if\relax\detokenize{#1}\relax%
+	% arg is empty
+	\else%
+	\ifnum #1=6%
+	\underline{#1}%
+	\else%
+	\ifnum #1=9%
+	\underline{#1}%
+	\else%
+	\ifnum #1=0% if 0 dont show anything
+	\textcolor{white}{0}
+	\else%
+	#1%
+	\fi%
+	\fi%
+	\fi%
+}
+
+%%% TILE AND PORT FUNCTIONS ----------------------------------
+\newcommand{\Tile}[3]{% {RESOURCE}{NUMBER}{GRAPHIC}
+	\tcbox[colback=#1,colframe=#1,
+	boxsep=1pt,left=4pt,right=4pt,top=4pt,bottom=4pt,
+	circular arc]{\centering%
+		\parbox[c][23mm][c]{23mm}{
+			\mbox{\tcbox[colback=white,colframe=white,
+				boxsep=1pt,left=2pt,right=2pt,top=2pt,bottom=2pt,
+				circular arc]{\parbox[c][8mm][c]{8mm}{\centering\Huge\genNum{#2}
+				}}\small{ \rm \genPips{#2}
+			}}
+			% TODO if you want, put a graphic here
+			% #3 
+			\centering \genResWord{#1} \centering
+	}}%
+}
+
+
+\newcommand{\Port}[2][]{% if optional arg passed, don't put a 2 or 3 (for port trading)
+	\ifthenelse{\equal{#1}{}}{%
+	\let\TWO2%
+    \let\THREE3%
+	}{%
+	\let\TWO\empty%
+    \let\THREE\empty%
+	}%
+	\ifthenelse{\equal{#2}{w}}{\small\colorbox{#2}{\contour{white}{\textsuperscript{\TWO}WD}}}{}%
+	\ifthenelse{\equal{#2}{l}}{\small\colorbox{#2}{\contour{white}{\textsuperscript{\TWO}LM}}}{}% lumber = wood
+	\ifthenelse{\equal{#2}{b}}{\small\colorbox{#2}{\contour{white}{\textsuperscript{\TWO}BR}}}{}%
+	\ifthenelse{\equal{#2}{s}}{\small\colorbox{#2}{\contour{white}{\textsuperscript{\TWO}SH}}}{}%
+	\ifthenelse{\equal{#2}{h}}{\small\colorbox{#2}{\contour{white}{\textsuperscript{\TWO}WH}}}{}%
+	\ifthenelse{\equal{#2}{g}}{\small\colorbox{#2}{\contour{white}{\textsuperscript{\TWO}GR}}}{}% grain = wheat
+	\ifthenelse{\equal{#2}{o}}{\small\colorbox{#2}{\contour{white}{\textsuperscript{\TWO}OR}}}{}%
+	\ifthenelse{\equal{#2}{a}}{\small\colorbox{#2}{\contour{white}{\textsuperscript{\THREE}??}}}{}%
+					}
+
+
+
+%%% INIT COUNTERS FOR GENERATING TILE COMMANDS ----------------------------------
+\newcounter{index}%
+\newcounter{column}%
+\newcounter{tilenum}%
+	
+
+\begin{document}
+				
+	\newcommand{\ExtraHeight}{\vphantom{\Huge K}} % for legened tables extra spacing
+	\newcommand{\PrintCatanBoard}[1][]{\newpage
+		\begin{minipage}{.7\textwidth}
+			
+			\begin{tikzpicture} % the board template
+			
+			\node[hexsty,anchor=0]   (TileA) at (0,0)       {\TileA};
+			\node[hexsty,anchor=150] (TileB) at (TileA.30)  {\TileB};
+			\node[hexsty,anchor=150] (TileC) at (TileB.30)  {\TileC};
+			
+			\node[hexsty,anchor=90]  (TileD) at (TileA.210) {\TileD};
+			\node[hexsty,anchor=150] (TileE) at (TileD.30)  {\TileE};
+			\node[hexsty,anchor=150] (TileF) at (TileE.30)  {\TileF};
+			\node[hexsty,anchor=150] (TileG) at (TileF.30)  {\TileG};
+			
+			\node[hexsty,anchor=90]  (TileH) at (TileD.210) {\TileH};
+			\node[hexsty,anchor=150] (TileI) at (TileH.30)  {\TileI};
+			\node[hexsty,anchor=150] (TileJ) at (TileI.30)  {\TileJ};
+			\node[hexsty,anchor=150] (TileK) at (TileJ.30)  {\TileK};
+			\node[hexsty,anchor=150] (TileL) at (TileK.30)  {\TileL};
+			
+			\node[hexsty,anchor=90]  (TileM) at (TileH.330) {\TileM};
+			\node[hexsty,anchor=150] (TileN) at (TileM.30)  {\TileN};
+			\node[hexsty,anchor=150] (TileO) at (TileN.30)  {\TileO};
+			\node[hexsty,anchor=150] (TileP) at (TileO.30)  {\TileP};
+			
+			\node[hexsty,anchor=90]  (TileQ) at (TileM.330) {\TileQ};
+			\node[hexsty,anchor=150] (TileR) at (TileQ.30)  {\TileR};
+			\node[hexsty,anchor=150] (TileS) at (TileR.30)  {\TileS};
+			
+			\node[portsty,anchor=300] (PortA) at (TileA.120) {\PortA};
+			\node[portsty,anchor=240] (PortB) at (TileB.60)  {\PortB};
+			\node[portsty,anchor=240] (PortC) at (TileG.60)  {\PortC};
+			\node[portsty,anchor=180] (PortD) at (TileL.0)   {\PortD};
+			\node[portsty,anchor=120] (PortE) at (TileP.300) {\PortE};
+			\node[portsty,anchor=120] (PortF) at (TileR.300) {\PortF};
+			\node[portsty,anchor=60]  (PortG) at (TileQ.240) {\PortG};
+			\node[portsty,anchor=0]   (PortH) at (TileM.180) {\PortH};
+			\node[portsty,anchor=0]   (PortI) at (TileD.180) {\PortI};
+			
+			\end{tikzpicture}
+			
+			 \StrSubstitute{#1}{.csv}{}{} % file name
+			
+		\end{minipage}%
+		\hspace{-1.5cm}
+		\begin{minipage}{.25\textwidth}
+			\flushleft\noindent
+			\begin{adjustbox}{angle=90}
+				\begin{tabular}{@{}rr@{}}
+					roads & 15\\
+					sett.s &5\\
+					cities& { }4\\
+					& \\
+					lgst road  & $\geq$ 5 \\
+					& \\  % space under here to put dots with marker for lgst road
+					lgst army  & $\geq$ 3\\
+				\end{tabular}
+			\end{adjustbox}
+			
+			\vspace{7cm}
+
+			\begin{adjustbox}{angle=90}
+				\begin{tabular}{@{}cll@{}}
+					&& \\
+					&& \\
+					\RoadSym& road & \Port[n]{w} \Port[n]{b} \ExtraHeight\\
+					\SettSym& sett.&\Port[n]{w} \Port[n]{b} \Port[n]{s} \Port[n]{h} \ExtraHeight\\
+					\CitySym& city & \Port[n]{h} \Port[n]{h} \Port[n]{o} \Port[n]{o} \Port[n]{o} \ExtraHeight\\
+					\DevSym &dev. & \Port[n]{s} \Port[n]{h} \Port[n]{o} \ExtraHeight\\
+				\end{tabular}
+			\end{adjustbox}
+		\end{minipage}%
+	}
+	
+	\tt% typewriter font
+	\noindent%
+
+	\renewcommand{\do}[1]{% this is performed in the csv do-loop	
+		% load up commands that are pushed to the catan board tiles
+		\edef\column{\xintthe\xintiexpr\value{index}/:3\relax}% get the column num of the csv
+
+		\ifnum\column=0 % if first column, get the tile letter as a number
+			\setcounter{tilenum}{\xintthe\xintiexpr(\value{index})/3+1\relax}%
+		\fi%
+		\ifnum\column=1 % second column is the resource, store it in a definition
+			\def\resource{#1}%
+		\fi%
+		\ifnum\column=2 % third column is the number, now we can replace the Tile or Port Command
+			\ifnum\value{index}<57
+			
+%				\Alph{tilenum}: \resource, #1\\
+				\defineTileCmd{Tile\Alph{tilenum}}{#1}{\resource}%
+			\else
+			
+				\addtocounter{tilenum}{-19}%
+%				P\alph{tilenum}: \resource\\
+				\definePortCmd{Port\Alph{tilenum}}{\resource}%
+			\fi%
+		\fi%
+		\addtocounter{index}{1}% increment index
+	}% new line in between items
+	\newcommand{\defineTileCmd}[3]{%
+	\expandafter\defineTileCmdAux\expandafter{#3}{#1}{#2}% expands the deine command and the \resource
+	}
+	\newcommand{\defineTileCmdAux}[3]{%
+		\expandafter\newcommand\csname #2\endcsname{\Tile{#1}{#3}{}}%
+	}
+	\newcommand{\definePortCmd}[2]{%
+	\expandafter\definePortCmdAux\expandafter{#2}{#1}%
+	}
+	\newcommand{\definePortCmdAux}[2]{%
+		\expandafter\newcommand\csname #2\endcsname{\Port{#1}}%
+	}
+
+
+\foreach \file in \CSVfiles{% iterate through the CSV files
+ 	\CatchFileDef{\CSVdata}{\file}{\endlinechar=`\,}% ensure comma between lines
+	\setcounter{index}{0}%  index is location in csv file
+	\setcounter{column}{0}% 
+	\setcounter{tilenum}{0}% number corresponding to tile letter (A=1, B=2, etc.)
+	\expandafter\docsvlist\expandafter{\CSVdata} % run \do for CSV items, this will load commands to produce Catan Board
+	\PrintCatanBoard[\file]% Print the board
+}%
+
+
+\end{document} % thanks :)

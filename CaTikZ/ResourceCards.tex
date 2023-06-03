@@ -1,0 +1,80 @@
+\documentclass[12pt,letterpaper]{article}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{pgffor}
+\usepackage{xint}
+\usepackage{xintexpr}
+\usepackage{geometry}
+\geometry{landscape,margin=0.2in}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usetikzlibrary{shapes.geometric}
+
+\usepackage[outline]{contour}
+
+\definecolor{SHEEP}{RGB}{173, 255, 47}
+\definecolor{WHEAT}{RGB}{255, 223, 0}
+\definecolor{WOOD}{RGB}{125,125,0}
+\definecolor{BRICK}{RGB}{227, 66, 52}
+\definecolor{ORE}{RGB}{	181, 181, 181}
+\definecolor{DESERT}{RGB}{255,255,255}
+\definecolor{ANY}{RGB}{0,255,255}
+
+
+
+\begin{document}
+
+\tt  % typewriter font
+\noindent
+\flushleft
+
+\def\Resources{
+	{WOOD},%
+	{BRICK},%
+	{SHEEP},%
+	{WHEAT},%
+	{ORE}%
+}
+
+
+\newcommand{\tinyspace}{\allowbreak\hspace{-.4em}\allowbreak}
+
+\newcommand{\Card}[2]{%
+	\framebox[1in]{\parbox[c][1.25in][c]{1in}{\centering%
+			\tcbox[tikznode,colback=#1,colframe=#1,
+			boxsep=8pt,left=4pt,right=4pt,top=4pt,bottom=4pt]{
+			#2}
+	}}
+}%
+%
+\foreach \r in \Resources{%
+	\foreach \n in {1,...,19}{%
+		\Card{\r}{\ \ \ \ \ \ \\\contour{white}{\r}\\ }\tinyspace%
+	}%
+}%
+%
+%
+\foreach \d in {1,...,14}{%
+	\Card{white}{\contour{white}{KNIGHT}}\tinyspace%
+}%
+%
+\foreach \d in {1,...,5}{%
+	\Card{white}{\contour{white}{+1 VP}}\tinyspace%
+}%
+%
+\foreach \d in {1,...,2}{%
+	\Card{white}{2 ROADS}\tinyspace%
+}%
+%
+\foreach \d in {1,...,2}{%
+	\Card{white}{2 RESRCS}\tinyspace%
+}%
+%
+\foreach \d in {1,...,2}{%
+	\Card{white}{MONOPOLY}\tinyspace%
+}%
+%
+%\Card{white}{ARMY}\tinyspace%
+%\Card{white}{ROADS}\tinyspace%
+
+\end{document}
